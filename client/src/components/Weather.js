@@ -1,8 +1,20 @@
 import React from "react";
 
 function Weather() {
-  const [data, SetData] = React.useState(null);
+  const [data, SetData] = React.useState([]);
   var ref = React.useRef(true);
+  const cities = [
+    { name: "Dnipro", latitude: "48.450001", longitude: "34.983334" },
+    { name: "Kyiv", latitude: "50.450001", longitude: "30.523333" },
+    { name: "Kharkiv", latitude: "49.9935", longitude: "36.232845" },
+    { name: "Odesa", latitude: "46.482952", longitude: "30.712481" },
+    { name: "Zhytomyr", latitude: "50.2649", longitude: "28.6767" },
+    { name: "Lviv", latitude: "49.842957", longitude: "24.031111" },
+    { name: "Kherson", latitude: "46.6558", longitude: "32.6178" },
+    { name: "Lutsk", latitude: "50.7593", longitude: "25.3424" },
+    { name: "Rivne", latitude: "50.619900", longitude: "26.251617" },
+    { name: "Ivano-Frankivs'k", latitude: "48.922633", longitude: "24.711117" },
+  ];
   React.useEffect(() => {
     if (ref.current) {
       GetWeather();
@@ -43,49 +55,54 @@ function Weather() {
     return codes[code];
   }
   async function GetWeather() {
-    let url = `https://api.open-meteo.com/v1/forecast?latitude=48.450001&longitude=34.983334&current_weather=true&hourly=temperature_2m,relativehumidity_2m,pressure_msl`;
-    await fetch(url, {
-      method: "GET",
-    })
-      .then(function (response) {
-        return response.json();
+    let url = "";
+    await Array.from(cities).forEach(async (element) => {
+      url = `https://api.open-meteo.com/v1/forecast?latitude=${element.latitude}&longitude=${element.longitude}&current_weather=true&hourly=temperature_2m,relativehumidity_2m,pressure_msl`;
+      await fetch(url, {
+        method: "GET",
       })
-      .then(function (result) {
-        SetData(result);
-      });
-    //${e.value}
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (result) {
+          result.cityName = element.name;
+          SetData((oldArray) => [...oldArray, result]);
+        });
+    });
   }
 
   return (
-    <div className="App">
-      {!data ? (
+    <div className="main">
+      {data.length <= 0 ? (
         ""
       ) : (
         <>
-          <div className="block">
-            <h2>City: Dnipro</h2>
-            <div className="weather">
-              <img
-                src={require(`../resources/${GetWeatherByCode(
-                  data.current_weather.weathercode
-                )}.png`)}
-                className="weather-icon"
-              />
+          {data.map((item) => (
+            <div className="block" key={item}>
+              <h2>City: {item.cityName}</h2>
+              <div className="weather">
+                <img
+                  src={require(`../resources/${GetWeatherByCode(
+                    item.current_weather.weathercode
+                  )}.png`)}
+                  className="weather-icon"
+                />
 
-              <span id="temp">{data.current_weather.windspeed}</span>
-              <span className="temp cel" id="cel">
-                °C
-              </span>
-              <span id="info">
-                {GetWeatherByCode(data.current_weather.weathercode)} <br />
-                Wind: {data.current_weather.windspeed} km/h
-                <br />
-                Humidity:{" "}
-                {data.hourly.relativehumidity_2m[new Date().getHours()]}%
-              </span>
+                <span id="temp">{item.current_weather.windspeed}</span>
+                <span className="temp cel" id="cel">
+                  °C
+                </span>
+                <span id="info">
+                  {GetWeatherByCode(item.current_weather.weathercode)} <br />
+                  Wind: {item.current_weather.windspeed} km/h
+                  <br />
+                  Humidity:{" "}
+                  {item.hourly.relativehumidity_2m[new Date().getHours()]}%
+                </span>
+              </div>
             </div>
-          </div>
-          <button onClick={GetWeather}>Get Weather</button>
+          ))}
+          {/* <button onClick={GetWeather}>Get Weather</button> */}
         </>
       )}
     </div>
